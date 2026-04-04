@@ -1,5 +1,12 @@
 # Unreleased
 
+# 3.2.1
+
+- Fix scoreboard and teams
+- Added Fancy Hologram support
+- Added capture permission
+- Improve plugin structure
+
 # 3.1.1
 
 - Fix command description
