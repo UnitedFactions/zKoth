@@ -1,6 +1,6 @@
 plugins {
     `java-library`
-    id("com.gradleup.shadow") version "9.0.0-beta11"
+    id("com.gradleup.shadow") version "9.6.0"
     id("re.alwyn974.groupez.repository") version "1.0.0"
 }
 
@@ -47,13 +47,16 @@ allprojects {
     }
 
     java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
         withSourcesJar()
         withJavadocJar()
     }
 
     tasks.compileJava {
         options.encoding = "UTF-8"
-        options.release = 21
+        options.release = 25
     }
 
     tasks.javadoc {
@@ -63,13 +66,13 @@ allprojects {
     }
 
     dependencies {
-        compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT")
+        compileOnly("io.papermc.paper:paper-api:26.2.build.62-beta")
         compileOnly("com.mojang:authlib:3.11.50")
 
-        implementation("com.github.cryptomorin:XSeries:9.4.0")
-        implementation("fr.mrmicky:fastboard:2.1.5")
+        implementation("com.github.cryptomorin:XSeries:13.7.1")
+        implementation("fr.mrmicky:fastboard:2.2.0")
         implementation("com.tcoded:FoliaLib:0.5.1")
-        implementation("fr.maxlego08.sarah:sarah:1.18")
+        implementation("fr.maxlego08.sarah:sarah:1.23")
     }
 
     tasks.shadowJar {
@@ -109,7 +112,7 @@ tasks {
     }
 
     compileJava {
-        options.release = 21
+        options.release = 25
     }
 
     processResources {
