@@ -5,12 +5,14 @@ plugins {
 }
 
 group = "fr.maxlego08.koth"
-version = "3.2.1-uf.1"
+version = "3.2.1-uf.2-SNAPSHOT"
 
 extra.set("targetFolder", file("target/"))
 extra.set("apiFolder", file("target-api/"))
 extra.set("classifier", System.getProperty("archive.classifier"))
 extra.set("sha", System.getProperty("github.sha"))
+val legacyResources = layout.projectDirectory.dir("resources")
+val pluginVersion = version.toString()
 
 allprojects {
 
@@ -34,6 +36,7 @@ allprojects {
         maven(url = "https://libraries.minecraft.net/")
         maven(url = "https://repo.tcoded.com/releases")
         maven(url = "https://repo.william278.net/releases")
+        maven(url = "https://repo.incredibleplugins.com/releases/")
         maven(url = "https://repo.codemc.org/repository/maven-public")
         exclusiveContent {
             forRepository {
@@ -57,6 +60,7 @@ allprojects {
     tasks.compileJava {
         options.encoding = "UTF-8"
         options.release = 25
+        options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xlint:removal", "-Xlint:unchecked", "-Werror"))
     }
 
     tasks.withType<Jar> {
@@ -71,8 +75,12 @@ allprojects {
     }
 
     dependencies {
-        compileOnly("io.papermc.paper:paper-api:26.2.build.62-beta")
-        compileOnly("com.mojang:authlib:3.11.50")
+        compileOnly("io.papermc.paper:paper-api:26.2.build.112-stable")
+
+        testImplementation("io.papermc.paper:paper-api:26.2.build.112-stable")
+        testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.13.4")
+        testImplementation("org.mockito:mockito-core:5.18.0")
 
         implementation("com.github.cryptomorin:XSeries:13.7.1")
         implementation("fr.mrmicky:fastboard:2.2.0")
@@ -86,6 +94,10 @@ allprojects {
         archiveClassifier.set("")
     }
 
+    tasks.test {
+        useJUnitPlatform()
+    }
+
 }
 
 dependencies {
@@ -94,7 +106,7 @@ dependencies {
     // Include all hooks dynamically
     file("Hooks").listFiles()?.filter {
         it.isDirectory && !it.name.equals("build")
-    }?.forEach { hookDir ->
+    }?.sortedBy { it.name }?.forEach { hookDir ->
         implementation(project(":Hooks:${hookDir.name}"))
     }
 }
@@ -126,9 +138,9 @@ tasks {
     }
 
     processResources {
-        from("resources")
+        from(legacyResources)
         filesMatching("plugin.yml") {
-            expand("version" to project.version)
+            expand("version" to pluginVersion)
         }
     }
 }

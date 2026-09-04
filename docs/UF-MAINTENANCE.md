@@ -28,6 +28,20 @@ be contributed upstream.
 - Prepare generic upstream contributions from a clean branch based on the
   current upstream target branch.
 
+## Compatibility policy
+
+- Compile with Java 25 against the exact Paper 26.2 API used by the maintained
+  line. Compiler deprecation, removal, and unchecked warnings are build errors.
+- Compile the Lands hook against the latest public Lands 8 API artifact and run
+  private integration acceptance against the exact licensed Lands plugin used
+  by the server. Licensed artifacts are never committed or uploaded.
+- Use Lands ULIDs as stable team identifiers. Do not use removed numeric land
+  IDs or internal Lands implementation classes.
+- Keep only the legacy item decoder required to migrate existing configuration;
+  all newly saved items use Paper's supported byte serializer.
+- Build output must have deterministic entry ordering and timestamps so the
+  same source produces the same SHA-256 artifact.
+
 ## Public-repository boundaries
 
 Never commit production configuration, arena coordinates, rewards, logs,
