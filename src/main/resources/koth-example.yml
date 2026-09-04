@@ -1,5 +1,6 @@
 # Available placeholders for command execution:
 # - %online-player%: Targets all online players in the team
+# - %participant%: Name of one recorded participant receiving a participant reward
 # - %name%: Name of the Koth event
 # - %displayName%: Player-facing KOTH arena/location name
 # - %phase%: INACTIVE, PREPARATION, LIVE, CAPTURING or CONTESTED
@@ -52,6 +53,18 @@ startCommands: []
 
 # List of commands executed when a player wins the Koth
 endCommands: []
+
+# Optional per-participant rewards. A player is recorded on their first eligible
+# entry into the KOTH cuboid during the live phase. Their first team identity is
+# retained for that event. Existing arena configurations remain disabled by default.
+participantRewards:
+  enabled: false
+  dryRun: false
+  requireOnlineAtWin: true
+  requiredPlugins: []
+  winnerCommands: []
+  loserCommands: []
+  capturerCommands: []
 
 # Configuration for random commands executed at the end of Koth
 randomEndCommands:

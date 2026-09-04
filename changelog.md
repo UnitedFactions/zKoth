@@ -1,5 +1,11 @@
 # Unreleased
 
+# 3.2.1-uf.4
+
+- Add opt-in KOTH entrant tracking with separate winner, loser and capturer command rewards.
+- Keep the first eligible Lands team identity recorded for each entrant during an event.
+- Add dry-run payout validation and fail closed when configured reward providers are unavailable.
+
 # 3.2.1-uf.3
 
 - Keep third-party scoreboards untouched when native zKoth scoreboards are disabled.
