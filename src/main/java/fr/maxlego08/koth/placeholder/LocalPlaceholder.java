@@ -1,6 +1,7 @@
 package fr.maxlego08.koth.placeholder;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -101,7 +102,9 @@ public class LocalPlaceholder implements LocalPlaceholderApi {
 	public String onRequest(Player player, String string) {
 
 		Optional<AutoPlaceholder> optional = this.autoPlaceholders.stream()
-				.filter(e -> string.startsWith(e.getStartWith())).findFirst();
+				.filter(e -> string.startsWith(e.getStartWith()))
+				.sorted(Comparator.comparingInt((AutoPlaceholder value) -> value.getStartWith().length()).reversed())
+				.findFirst();
 		if (optional.isPresent()) {
 
 			AutoPlaceholder autoPlaceholder = optional.get();

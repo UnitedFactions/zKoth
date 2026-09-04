@@ -4,6 +4,7 @@
 
 - Keep third-party scoreboards untouched when native zKoth scoreboards are disabled.
 - Add player-facing display names and stable phase/contest placeholders.
+- Resolve overlapping placeholder prefixes by selecting the most specific key.
 - Pause capture progress when an opposing team contests the zone.
 - Prevent multiple KOTH events from being started at the same time through commands.
 - Fix the cooldown every-second toggle and reduce default broadcast thresholds.
