@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "fr.maxlego08.koth"
-version = "3.2.1"
+version = "3.2.1-uf.1"
 
 extra.set("targetFolder", file("target/"))
 extra.set("apiFolder", file("target-api/"))
@@ -59,6 +59,11 @@ allprojects {
         options.release = 25
     }
 
+    tasks.withType<Jar> {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
+
     tasks.javadoc {
         options.encoding = "UTF-8"
         if (JavaVersion.current().isJava9Compatible)
@@ -95,6 +100,11 @@ dependencies {
 }
 
 tasks {
+    clean {
+        delete(rootProject.extra["targetFolder"])
+        delete(rootProject.extra["apiFolder"])
+    }
+
     shadowJar {
         relocate("com.tcoded.folialib", "fr.maxlego08.koth.libs.folia")
         relocate("fr.mrmicky.fastboard", "fr.maxlego08.koth.fastboard")
