@@ -7,6 +7,7 @@ import fr.maxlego08.koth.api.KothLootType;
 import fr.maxlego08.koth.api.KothType;
 import fr.maxlego08.koth.api.discord.DiscordWebhookConfig;
 import fr.maxlego08.koth.api.utils.HologramConfig;
+import fr.maxlego08.koth.api.utils.ParticipantRewardConfiguration;
 import fr.maxlego08.koth.api.utils.RandomCommand;
 import fr.maxlego08.koth.api.utils.ScoreboardConfiguration;
 import fr.maxlego08.koth.api.utils.ProgressBar;
@@ -58,6 +59,15 @@ public class KothLoader extends ZUtils implements Loader<Koth> {
         boolean enableEverySecondsCooldownMessage = configuration.getBoolean("enableEverySecondsCooldownMessage", false);
         List<String> startCommands = configuration.getStringList("startCommands");
         List<String> endCommands = configuration.getStringList("endCommands");
+        ParticipantRewardConfiguration participantRewards = new ParticipantRewardConfiguration(
+                configuration.getBoolean("participantRewards.enabled", false),
+                configuration.getBoolean("participantRewards.dryRun", false),
+                configuration.getBoolean("participantRewards.requireOnlineAtWin", true),
+                configuration.getStringList("participantRewards.requiredPlugins"),
+                configuration.getStringList("participantRewards.winnerCommands"),
+                configuration.getStringList("participantRewards.loserCommands"),
+                configuration.getStringList("participantRewards.capturerCommands")
+        );
         Location minLocation = locationLoader.load(configuration, "minLocation.", file);
         Location maxLocation = locationLoader.load(configuration, "maxLocation.", file);
         ScoreboardConfiguration cooldownScoreboard = scoreboardLoaderLoader.load(configuration, "scoreboard.cooldown.", file);
@@ -96,7 +106,7 @@ public class KothLoader extends ZUtils implements Loader<Koth> {
             });
         }
 
-        return new ZKoth(this.plugin, fileName, kothType, name, displayName, captureSeconds, minLocation, maxLocation, startCommands, endCommands, cooldownScoreboard, startScoreboard, cooldownStart, stopAfterSeconds, enableStartCapMessage, enableLooseCapMessage, enableEverySecondsCapMessage, enableEverySecondsCooldownMessage, hologramConfig, itemStacks, kothLootType, discordWebhookConfig, randomItemStacks, blacklistTeamId, progressBar, randomCommands, maxRandomCommands);
+        return new ZKoth(this.plugin, fileName, kothType, name, displayName, captureSeconds, minLocation, maxLocation, startCommands, endCommands, participantRewards, cooldownScoreboard, startScoreboard, cooldownStart, stopAfterSeconds, enableStartCapMessage, enableLooseCapMessage, enableEverySecondsCapMessage, enableEverySecondsCooldownMessage, hologramConfig, itemStacks, kothLootType, discordWebhookConfig, randomItemStacks, blacklistTeamId, progressBar, randomCommands, maxRandomCommands);
     }
 
     @Override
@@ -110,6 +120,14 @@ public class KothLoader extends ZUtils implements Loader<Koth> {
         configuration.set("stopAfterSeconds", koth.getStopAfterSeconds());
         configuration.set("startCommands", koth.getStartCommands());
         configuration.set("endCommands", koth.getEndCommands());
+        ParticipantRewardConfiguration participantRewards = koth.getParticipantRewardConfiguration();
+        configuration.set("participantRewards.enabled", participantRewards.isEnabled());
+        configuration.set("participantRewards.dryRun", participantRewards.isDryRun());
+        configuration.set("participantRewards.requireOnlineAtWin", participantRewards.isRequireOnlineAtWin());
+        configuration.set("participantRewards.requiredPlugins", participantRewards.getRequiredPlugins());
+        configuration.set("participantRewards.winnerCommands", participantRewards.getWinnerCommands());
+        configuration.set("participantRewards.loserCommands", participantRewards.getLoserCommands());
+        configuration.set("participantRewards.capturerCommands", participantRewards.getCapturerCommands());
 
         configuration.set("randomEndCommands.commandAmount", koth.getMaxRandomCommands());
         List<Map<String, Object>> endRandomCommands = new ArrayList<>();

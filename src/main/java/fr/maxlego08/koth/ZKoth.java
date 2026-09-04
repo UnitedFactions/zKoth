@@ -17,6 +17,7 @@ import fr.maxlego08.koth.api.events.KothStopEvent;
 import fr.maxlego08.koth.api.events.KothWinEvent;
 import fr.maxlego08.koth.api.utils.HologramConfig;
 import fr.maxlego08.koth.api.utils.PlayerResult;
+import fr.maxlego08.koth.api.utils.ParticipantRewardConfiguration;
 import fr.maxlego08.koth.api.utils.RandomCommand;
 import fr.maxlego08.koth.api.utils.ScoreboardConfiguration;
 import fr.maxlego08.koth.hook.teams.NoneHook;
@@ -79,6 +80,8 @@ public class ZKoth extends ZUtils implements Koth {
     private final ProgressBar progressBar;
     private final List<RandomCommand> randomCommands;
     private final int maxRandomCommands;
+    private final ParticipantRewardConfiguration participantRewards;
+    private final KothParticipantLedger participantLedger = new KothParticipantLedger();
     private final DiscordWebhookConfig discordWebhookConfig;
     private List<ItemStack> itemStacks;
     private String name;
@@ -92,13 +95,14 @@ public class ZKoth extends ZUtils implements Koth {
     private KothTeam kothTeam = new NoneHook();
     private Player currentPlayer;
     private boolean contested;
+    private boolean participantRewardsProcessed;
     private AtomicInteger remainingSeconds;
     private TimerTask timerTask;
     private TimerTask timerTaskStop;
     private Timer stopTimer;
     private List<PlayerResult> playerResults = new ArrayList<>();
 
-    public ZKoth(KothPlugin plugin, String fileName, KothType kothType, String name, String displayName, int captureSeconds, Location minLocation, Location maxLocation, List<String> startCommands, List<String> endCommands, ScoreboardConfiguration cooldownScoreboard, ScoreboardConfiguration startScoreboard, int cooldownStart, int stopAfterSeconds, boolean enableStartCapMessage, boolean enableLooseCapMessage, boolean enableEverySecondsCapMessage, boolean enableEverySecondsCooldownMessage, HologramConfig hologramConfig, List<ItemStack> itemStacks, KothLootType kothLootType, DiscordWebhookConfig discordWebhookConfig, int randomItemStacks, List<String> blacklistTeamId, ProgressBar progressBar, List<RandomCommand> randomCommands, int maxRandomCommands) {
+    public ZKoth(KothPlugin plugin, String fileName, KothType kothType, String name, String displayName, int captureSeconds, Location minLocation, Location maxLocation, List<String> startCommands, List<String> endCommands, ParticipantRewardConfiguration participantRewards, ScoreboardConfiguration cooldownScoreboard, ScoreboardConfiguration startScoreboard, int cooldownStart, int stopAfterSeconds, boolean enableStartCapMessage, boolean enableLooseCapMessage, boolean enableEverySecondsCapMessage, boolean enableEverySecondsCooldownMessage, HologramConfig hologramConfig, List<ItemStack> itemStacks, KothLootType kothLootType, DiscordWebhookConfig discordWebhookConfig, int randomItemStacks, List<String> blacklistTeamId, ProgressBar progressBar, List<RandomCommand> randomCommands, int maxRandomCommands) {
         this.plugin = plugin;
         this.fileName = fileName;
         this.kothType = kothType;
@@ -109,6 +113,7 @@ public class ZKoth extends ZUtils implements Koth {
         this.maxLocation = maxLocation;
         this.startCommands = startCommands;
         this.endCommands = endCommands;
+        this.participantRewards = participantRewards;
         this.startScoreboard = startScoreboard;
         this.cooldownScoreboard = cooldownScoreboard;
         this.cooldownStart = cooldownStart;
@@ -156,6 +161,7 @@ public class ZKoth extends ZUtils implements Koth {
         this.progressBar = new ProgressBar(10, '-', "&a", "&7");
         this.randomCommands = new ArrayList<>();
         this.maxRandomCommands = 0;
+        this.participantRewards = ParticipantRewardConfiguration.disabled();
 
         this.scoreboardRadius = plugin.getConfig().getInt("scoreboardRadius", 50);
     }
@@ -178,6 +184,11 @@ public class ZKoth extends ZUtils implements Koth {
     @Override
     public String getDisplayName() {
         return this.displayName;
+    }
+
+    @Override
+    public ParticipantRewardConfiguration getParticipantRewardConfiguration() {
+        return this.participantRewards;
     }
 
     @Override
@@ -282,6 +293,10 @@ public class ZKoth extends ZUtils implements Koth {
 
         if (this.minLocation == null || this.maxLocation == null) {
             message(sender, Message.SPAWN_ERROR);
+        } else if (!participantRewardProvidersAvailable()) {
+            if (sender != null) sender.sendMessage(color("&cThe KOTH cannot start because a required reward plugin is unavailable."));
+            this.plugin.getLogger().severe("Refused to start KOTH " + this.name
+                    + " because a required participant reward plugin is unavailable.");
         } else if (this.kothStatus == KothStatus.COOLDOWN) {
             message(sender, Message.SPAWN_COOLDOWN);
         } else if (this.kothStatus == KothStatus.START) {
@@ -296,6 +311,11 @@ public class ZKoth extends ZUtils implements Koth {
     @Override
     public void spawn(boolean now) {
         if (this.minLocation == null || this.maxLocation == null || this.kothStatus != KothStatus.STOP) return;
+        if (!participantRewardProvidersAvailable()) {
+            this.plugin.getLogger().severe("Refused to start KOTH " + this.name
+                    + " because a required participant reward plugin is unavailable.");
+            return;
+        }
         if (now) spawnNow();
         else spawn();
     }
@@ -320,9 +340,11 @@ public class ZKoth extends ZUtils implements Koth {
         this.kothStatus = KothStatus.STOP;
         this.currentPlayer = null;
         this.contested = false;
+        this.participantRewardsProcessed = false;
         this.timerTask = null;
         this.remainingSeconds = null;
         this.playersValues.clear();
+        this.participantLedger.clear();
         if (this.cooldownScoreboard.isEnable() || this.startScoreboard.isEnable()) {
             this.plugin.getScoreBoardManager().clearBoard();
         }
@@ -469,8 +491,10 @@ public class ZKoth extends ZUtils implements Koth {
 
     private void resetData() {
         this.playersValues.clear();
+        this.participantLedger.clear();
         this.currentPlayer = null;
         this.contested = false;
+        this.participantRewardsProcessed = false;
     }
 
     @Override
@@ -492,6 +516,10 @@ public class ZKoth extends ZUtils implements Koth {
         if (player.getWorld() != cuboid.getWorld()) return;
 
         Location pLoc = player.getLocation();
+
+        if (this.participantRewards.isEnabled() && cuboid.contains(pLoc)) {
+            recordParticipant(player);
+        }
 
         // Disabled native scoreboards must not take ownership away from plugins
         // such as RealScoreboard.
@@ -556,13 +584,22 @@ public class ZKoth extends ZUtils implements Koth {
         }
 
         String capturingTeamId = this.kothTeam.getTeamId(this.currentPlayer);
-        List<String> occupyingTeamIds = cuboid.getWorld().getPlayers().stream()
+        List<Player> occupants = cuboid.getWorld().getPlayers().stream()
                 .filter(player -> player != this.currentPlayer)
                 .filter(Player::isOnline)
                 .filter(Player::isValid)
                 .filter(player -> player.getGameMode() != GameMode.SPECTATOR)
                 .filter(player -> !Config.enableCapturePermission || player.hasPermission(Config.capturePermission))
                 .filter(player -> cuboid.contains(player.getLocation()))
+                .filter(player -> !this.blacklistTeamId.contains(this.kothTeam.getTeamId(player)))
+                .collect(Collectors.toList());
+
+        if (this.participantRewards.isEnabled()) {
+            recordParticipant(this.currentPlayer);
+            occupants.forEach(this::recordParticipant);
+        }
+
+        List<String> occupyingTeamIds = occupants.stream()
                 .map(this.kothTeam::getTeamId)
                 .filter(teamId -> !this.blacklistTeamId.contains(teamId))
                 .collect(Collectors.toList());
@@ -706,6 +743,69 @@ public class ZKoth extends ZUtils implements Koth {
         }
     }
 
+    private void recordParticipant(Player player) {
+        this.participantLedger.record(player.getUniqueId(), player.getName(), this.kothTeam.getTeamId(player));
+    }
+
+    private boolean participantRewardProvidersAvailable() {
+        if (!this.participantRewards.isEnabled() || this.participantRewards.isDryRun()) return true;
+        return this.participantRewards.getRequiredPlugins().stream()
+                .allMatch(pluginName -> Bukkit.getPluginManager().isPluginEnabled(pluginName));
+    }
+
+    private int dispatchParticipantCommands(KothParticipant participant, List<String> commands) {
+        Player onlinePlayer = Bukkit.getPlayer(participant.uniqueId());
+        if (this.participantRewards.isRequireOnlineAtWin() && onlinePlayer == null) {
+            this.plugin.getLogger().info("Skipped KOTH participant reward for offline player " + participant.playerName());
+            return 0;
+        }
+
+        int dispatched = 0;
+        for (String configuredCommand : commands) {
+            String command = replaceMessage(configuredCommand)
+                    .replace("%participant%", participant.playerName());
+            if (this.participantRewards.isDryRun()) {
+                this.plugin.getLogger().info("KOTH reward dry-run: " + command);
+                dispatched++;
+            } else {
+                String parsedCommand = onlinePlayer == null ? command : papi(command, onlinePlayer);
+                if (Bukkit.dispatchCommand(Bukkit.getConsoleSender(), parsedCommand)) dispatched++;
+                else this.plugin.getLogger().warning("KOTH reward command was not handled: " + command);
+            }
+        }
+        return dispatched;
+    }
+
+    private void distributeParticipantRewards(Player capturer) {
+        if (!this.participantRewards.isEnabled()) return;
+        if (this.participantRewardsProcessed) {
+            this.plugin.getLogger().warning("Skipped duplicate KOTH participant reward processing for " + this.name);
+            return;
+        }
+        this.participantRewardsProcessed = true;
+
+        recordParticipant(capturer);
+        if (!participantRewardProvidersAvailable()) {
+            this.plugin.getLogger().severe("KOTH participant rewards aborted because a required plugin is unavailable.");
+            return;
+        }
+
+        KothParticipantRewardPlan plan = KothParticipantRewardPlan.create(
+                this.participantLedger, capturer.getUniqueId(), this.participantRewards);
+        int dispatched = 0;
+
+        for (KothParticipantRewardPlan.RewardCommand rewardCommand : plan.commands()) {
+            dispatched += dispatchParticipantCommands(rewardCommand.participant(), List.of(rewardCommand.command()));
+        }
+
+        this.plugin.getLogger().info("KOTH participant rewards completed for " + this.name
+                + ": entrants=" + plan.entrants()
+                + ", winners=" + plan.winners()
+                + ", losers=" + plan.losers()
+                + ", commands=" + dispatched
+                + ", dryRun=" + this.participantRewards.isDryRun());
+    }
+
     public void endKoth(TimerTask task, Cuboid cuboid, Player player) {
 
         KothWinEvent kothWinEvent = new KothWinEvent(this, this.currentPlayer);
@@ -724,6 +824,7 @@ public class ZKoth extends ZUtils implements Koth {
         }
 
         this.endCommands.forEach(command -> dispatchCommand(command, player));
+        distributeParticipantRewards(player);
         if (this.maxRandomCommands != 0 && !this.randomCommands.isEmpty()) {
             int executedCommands = 0;
             while (executedCommands < maxRandomCommands) {

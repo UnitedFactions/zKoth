@@ -5,6 +5,7 @@ import fr.maxlego08.koth.api.utils.Cuboid;
 import fr.maxlego08.koth.api.utils.HologramConfig;
 import fr.maxlego08.koth.api.utils.PlayerResult;
 import fr.maxlego08.koth.api.utils.ProgressBar;
+import fr.maxlego08.koth.api.utils.ParticipantRewardConfiguration;
 import fr.maxlego08.koth.api.utils.RandomCommand;
 import fr.maxlego08.koth.api.utils.ScoreboardConfiguration;
 import fr.maxlego08.koth.api.utils.interfaces.CollectionConsumer;
@@ -103,6 +104,13 @@ public interface Koth {
      * @return A list of {@code String} commands to execute at the end.
      */
     List<String> getEndCommands();
+
+    /**
+     * Gets the optional participant reward configuration.
+     *
+     * @return reward commands for winning entrants, losing entrants and the capturer
+     */
+    ParticipantRewardConfiguration getParticipantRewardConfiguration();
 
     /**
      * Retrieves a collection of all nearby players according to the koth's scoreboard radius
