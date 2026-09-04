@@ -1,10 +1,9 @@
-name: Build Action
+name: Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    types: [ opened, synchronize, reopened ]
   workflow_dispatch:
 
 permissions:
@@ -17,14 +16,40 @@ concurrency:
 
 jobs:
   build:
-    name: Build and Publish zKoth
-    uses: GroupeZ-dev/actions/.github/workflows/build.yml@main
-    with:
-      project-name: "zKoth"
-      publish: true
-      project-to-publish: "API:publish"
-      discord-avatar-url: "https://groupez.dev/storage/images/335.png"
-    secrets:
-      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-      MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
-      MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+    name: Java 25 clean build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Java 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - name: Verify Gradle wrapper
+        shell: bash
+        run: |
+          test "$(sha256sum gradle/wrapper/gradle-wrapper.jar | cut -d' ' -f1)" = "cb0da6751c2b753a16ac168bb354870ebb1e162e9083f116729cec9c781156b8"
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Verify release artifact
+        shell: bash
+        run: |
+          artifact="target/zKoth-3.2.1-uf.1.jar"
+          test -f "$artifact"
+          test "$(find target -maxdepth 1 -type f -name 'zKoth-*.jar' | wc -l)" -eq 1
+          unzip -p "$artifact" plugin.yml > "$RUNNER_TEMP/plugin.yml"
+          grep -Fx "name: zKoth" "$RUNNER_TEMP/plugin.yml"
+          grep -Fx "main: fr.maxlego08.koth.KothPlugin" "$RUNNER_TEMP/plugin.yml"
+          grep -Fx "version: 3.2.1-uf.1" "$RUNNER_TEMP/plugin.yml"
+          jar tf "$artifact" | grep -Fx "fr/maxlego08/koth/hook/teams/LandHook.class"
+          jar tf "$artifact" | grep -Fx "fr/maxlego08/koth/hologram/DecentHologram.class"
+          jar tf "$artifact" | grep -Fx "fr/maxlego08/koth/placeholder/DistantPlaceholder.class"
+          sha256sum "$artifact"
