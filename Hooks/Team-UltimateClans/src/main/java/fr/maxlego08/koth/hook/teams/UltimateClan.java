@@ -6,7 +6,6 @@ import me.ulrich.clans.Clans;
 import me.ulrich.clans.data.ClanData;
 import me.ulrich.clans.events.ClanDeleteEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -29,7 +28,7 @@ public class UltimateClan implements KothTeam {
     @Override
     public String getTeamName(OfflinePlayer player) {
         Optional<ClanData> optional = this.clans.getPlayerAPI().getPlayerClan(player.getUniqueId());
-        return optional.isPresent() ? ChatColor.translateAlternateColorCodes('&', optional.get().getTag()) : player.getName();
+        return optional.isPresent() ? optional.get().getTag().replace('&', '§') : player.getName();
     }
 
     @Override
