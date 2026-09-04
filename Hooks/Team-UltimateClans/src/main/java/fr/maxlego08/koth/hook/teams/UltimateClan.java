@@ -2,6 +2,7 @@ package fr.maxlego08.koth.hook.teams;
 
 import fr.maxlego08.koth.api.KothPlugin;
 import fr.maxlego08.koth.api.KothTeam;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import me.ulrich.clans.Clans;
 import me.ulrich.clans.data.ClanData;
 import me.ulrich.clans.events.ClanDeleteEvent;
@@ -17,6 +18,9 @@ import java.util.stream.Collectors;
 
 public class UltimateClan implements KothTeam {
 
+    private static final LegacyComponentSerializer AMPERSAND = LegacyComponentSerializer.legacyAmpersand();
+    private static final LegacyComponentSerializer SECTION = LegacyComponentSerializer.legacySection();
+
     private final KothPlugin plugin;
     private final Clans clans;
 
@@ -28,7 +32,7 @@ public class UltimateClan implements KothTeam {
     @Override
     public String getTeamName(OfflinePlayer player) {
         Optional<ClanData> optional = this.clans.getPlayerAPI().getPlayerClan(player.getUniqueId());
-        return optional.isPresent() ? optional.get().getTag().replace('&', '§') : player.getName();
+        return optional.isPresent() ? SECTION.serialize(AMPERSAND.deserialize(optional.get().getTag())) : player.getName();
     }
 
     @Override
