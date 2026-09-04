@@ -1,5 +1,13 @@
 # Unreleased
 
+# 3.2.1-uf.3
+
+- Keep third-party scoreboards untouched when native zKoth scoreboards are disabled.
+- Add player-facing display names and stable phase/contest placeholders.
+- Pause capture progress when an opposing team contests the zone.
+- Prevent multiple KOTH events from being started at the same time through commands.
+- Fix the cooldown every-second toggle and reduce default broadcast thresholds.
+
 # 3.2.1
 
 - Fix scoreboard and teams

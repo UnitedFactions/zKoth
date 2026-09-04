@@ -25,6 +25,9 @@
 # Placeholders:
 # %zkoth_world% - Current koth world
 # %zkoth_name% - Current koth name
+# %zkoth_display_name% - Current player-facing KOTH name
+# %zkoth_phase% - INACTIVE, PREPARATION, LIVE, CAPTURING or CONTESTED
+# %zkoth_contested% - Whether an opposing team is contesting the capture
 # %zkoth_min_x% - Current koth min X
 # %zkoth_min_y% - Current koth min Y
 # %zkoth_min_z% - Current koth min Z
@@ -88,29 +91,14 @@ playerMoveEventCooldown: 50
 
 # Display a message during koth cooldown
 displayMessageCooldown:
-  - 300
-  - 120
+  - 600
   - 60
-  - 30
   - 10
-  - 5
-  - 4
-  - 3
-  - 2
-  - 1
 
 # Display a message during koth cap
 displayMessageKothCap:
-  - 300
-  - 120
   - 60
-  - 30
   - 10
-  - 5
-  - 4
-  - 3
-  - 2
-  - 1
 
 noPlayer: 'X'
 

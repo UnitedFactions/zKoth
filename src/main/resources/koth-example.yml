@@ -1,6 +1,9 @@
 # Available placeholders for command execution:
 # - %online-player%: Targets all online players in the team
 # - %name%: Name of the Koth event
+# - %displayName%: Player-facing KOTH arena/location name
+# - %phase%: INACTIVE, PREPARATION, LIVE, CAPTURING or CONTESTED
+# - %contested%: Whether an opposing team is contesting the capture
 # - %world%: Name of the world where Koth is located
 # - %minX%, %minY%, %minZ%: Minimum X, Y, Z coordinates of Koth area
 # - %maxX%, %maxY%, %maxZ%: Maximum X, Y, Z coordinates of Koth area
@@ -16,6 +19,9 @@
 
 # Display name for the Koth event
 name: test
+
+# Player-facing arena/location name used in messages and placeholders
+displayName: North Outpost
 
 # Type of Koth event (e.g., CAPTURE)
 type: CAPTURE

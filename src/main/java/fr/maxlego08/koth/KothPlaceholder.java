@@ -23,6 +23,9 @@ public class KothPlaceholder extends ZUtils {
     public void register() {
 
         this.register("name", Koth::getName);
+        this.register("display_name", Koth::getDisplayName);
+        this.register("phase", koth -> koth.getPhase().name());
+        this.register("contested", koth -> String.valueOf(koth.isContested()));
         this.register("world", koth -> koth.getCenter().getWorld().getName());
         this.register("min_x", koth -> String.valueOf(koth.getMinLocation().getBlockX()));
         this.register("min_y", koth -> String.valueOf(koth.getMinLocation().getBlockY()));
@@ -71,6 +74,9 @@ public class KothPlaceholder extends ZUtils {
             Optional<Koth> optional = this.kothManager.getKoth(args);
             return String.valueOf(optional.filter(koth -> koth.getStatus() == KothStatus.START).isPresent());
         });
+        placeholder.register("display_name_", (player, args) -> this.kothManager.getKoth(args).map(Koth::getDisplayName).orElse(Config.noKoth));
+        placeholder.register("phase_", (player, args) -> this.kothManager.getKoth(args).map(koth -> koth.getPhase().name()).orElse("INACTIVE"));
+        placeholder.register("contested_", (player, args) -> String.valueOf(this.kothManager.getKoth(args).map(Koth::isContested).orElse(false)));
         placeholder.register("nearby_players_", (player, args) -> {
             Optional<Koth> optional = this.kothManager.getKoth(args);
             return optional.map(Koth::getFormattedPlayersNearbyList).orElse("");

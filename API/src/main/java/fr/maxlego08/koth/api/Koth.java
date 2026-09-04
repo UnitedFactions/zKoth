@@ -49,6 +49,13 @@ public interface Koth {
     String getName();
 
     /**
+     * Gets the player-facing name of this KOTH game.
+     *
+     * @return A human-readable event/location name.
+     */
+    String getDisplayName();
+
+    /**
      * Sets the name of this KOTH game.
      *
      * @param name The new name for the KOTH game.
@@ -153,6 +160,18 @@ public interface Koth {
      * @return A {@code KothStatus} representing the current game status.
      */
     KothStatus getStatus();
+
+    /**
+     * Gets the player-facing runtime phase of this KOTH game.
+     *
+     * @return The current KOTH phase.
+     */
+    KothPhase getPhase();
+
+    /**
+     * @return true when an opposing team is contesting the current capture.
+     */
+    boolean isContested();
 
     /**
      * Spawns the KOTH game immediately or schedules it for later, based on the {@code now} parameter. Optionally,
@@ -328,4 +347,3 @@ public interface Koth {
 
     int getMaxRandomCommands();
 }
-
