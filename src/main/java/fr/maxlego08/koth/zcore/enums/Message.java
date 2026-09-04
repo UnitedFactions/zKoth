@@ -82,7 +82,7 @@ public enum Message {
     EVENT_START(MessageType.CENTER,
             "§8§m-+------------------------------+-",
             "",
-            "§fThe koth §b%name% §fhas just appeared!",
+            "§fThe koth §b%displayName% §fhas just appeared!",
             "§fCoordinate§8: §7%centerX%, %centerY%, %centerZ%.",
             "",
             "§8§m-+------------------------------+-"
@@ -100,31 +100,32 @@ public enum Message {
     EVENT_COOLDOWN(MessageType.CENTER,
             "§8§m-+------------------------------+-",
             "",
-            "§fThe koth §n%name%§f will appear in §d%spawnFormat%",
+            "§fThe koth §n%displayName%§f will appear in §d%spawnFormat%",
             "§fCoordinate§8: §7%centerX%, %centerY%, %centerZ%.",
             "",
             "§8§m-+------------------------------+-"
     ),
-    EVENT_COOLDOWN_EVERYSECONDS(MessageType.ACTION, "§fThe koth §n%name%§f will appear in §d%spawnFormat% §8(§7%centerX%, %centerY%, %centerZ%§8)"),
+    EVENT_COOLDOWN_EVERYSECONDS(MessageType.ACTION, "§fThe koth §n%displayName%§f will appear in §d%spawnFormat% §8(§7%centerX%, %centerY%, %centerZ%§8)"),
 
     EVENT_STOP(MessageType.CENTER,
             "§8§m-+------------------------------+-",
             "",
-            "§fkoth §n%name%§f has just been stopped.",
+            "§fkoth §n%displayName%§f has just been stopped.",
             "",
             "§8§m-+------------------------------+-"),
 
     SPAWN_ERROR("§cImpossible to spawn the koth, positions is wrong. You have to do §b/zkoth move §8<§aname§8>§c."),
     SPAWN_COOLDOWN("§cThe countdown to the appearance of the koth is already underway"),
     SPAWN_ALREADY("§cThe koth is running."),
+    SPAWN_OTHER_ACTIVE("§cAnother KOTH event is already active."),
 
     EVENT_FACION("No faction"),
     EVENT_PLAYER("Person"),
     EVENT_DISABLE("§cThe event is not enable."),
 
-    EVENT_CATCH(MessageType.ACTION, "§d%playerName% §fjust started capturing the koth §n%name%§f. §8(§7%centerX%, %centerY%, %centerZ%§8)"),
-    EVENT_LOOSE(MessageType.ACTION, "§d%playerName% §fjust loose koth §n%name%§f. §8(§7%centerX%, %centerY%, %centerZ%§8)"),
-    EVENT_TIMER(MessageType.ACTION, "§fAnother §b%captureFormat% §fbefore §d%playerName% §fwins the koth §n%name%§e. §8(§7%centerX%, %centerY%, %centerZ%§8)"),
+    EVENT_CATCH(MessageType.ACTION, "§d%playerName% §fjust started capturing the koth §n%displayName%§f. §8(§7%centerX%, %centerY%, %centerZ%§8)"),
+    EVENT_LOOSE(MessageType.ACTION, "§d%playerName% §fjust lost the koth §n%displayName%§f. §8(§7%centerX%, %centerY%, %centerZ%§8)"),
+    EVENT_TIMER(MessageType.ACTION, "§fAnother §b%captureFormat% §fbefore §d%playerName% §fwins the koth §n%displayName%§e. §8(§7%centerX%, %centerY%, %centerZ%§8)"),
     EVENT_EVERYSECONDS(MessageType.ACTION, "§d%playerName% §7- §8[§f%captureProgress%§8] §7- §b%capturePercent%§f%"),
 
     MOVE_SUCCESS("§7You have just moved the koth §f%name%§7."),
@@ -299,4 +300,3 @@ public enum Message {
     }
 
 }
-

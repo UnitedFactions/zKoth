@@ -197,6 +197,12 @@ public class KothManager extends ZUtils implements Savable {
         }
 
         Koth koth = optional.get();
+        boolean anotherKothIsRunning = this.koths.stream()
+                .anyMatch(candidate -> candidate != koth && candidate.getStatus() != KothStatus.STOP);
+        if (anotherKothIsRunning) {
+            message(sender, Message.SPAWN_OTHER_ACTIVE);
+            return;
+        }
         koth.spawn(sender, now);
     }
 

@@ -48,6 +48,7 @@ public class KothLoader extends ZUtils implements Loader<Koth> {
         }
 
         String name = configuration.getString("name");
+        String displayName = configuration.getString("displayName", name);
         int captureSeconds = configuration.getInt("capture");
         int cooldownStart = configuration.getInt("cooldownStart");
         int stopAfterSeconds = configuration.getInt("stopAfterSeconds");
@@ -95,7 +96,7 @@ public class KothLoader extends ZUtils implements Loader<Koth> {
             });
         }
 
-        return new ZKoth(this.plugin, fileName, kothType, name, captureSeconds, minLocation, maxLocation, startCommands, endCommands, cooldownScoreboard, startScoreboard, cooldownStart, stopAfterSeconds, enableStartCapMessage, enableLooseCapMessage, enableEverySecondsCapMessage, enableEverySecondsCooldownMessage, hologramConfig, itemStacks, kothLootType, discordWebhookConfig, randomItemStacks, blacklistTeamId, progressBar, randomCommands, maxRandomCommands);
+        return new ZKoth(this.plugin, fileName, kothType, name, displayName, captureSeconds, minLocation, maxLocation, startCommands, endCommands, cooldownScoreboard, startScoreboard, cooldownStart, stopAfterSeconds, enableStartCapMessage, enableLooseCapMessage, enableEverySecondsCapMessage, enableEverySecondsCooldownMessage, hologramConfig, itemStacks, kothLootType, discordWebhookConfig, randomItemStacks, blacklistTeamId, progressBar, randomCommands, maxRandomCommands);
     }
 
     @Override
@@ -103,6 +104,7 @@ public class KothLoader extends ZUtils implements Loader<Koth> {
 
         configuration.set("type", koth.getKothType().name());
         configuration.set("name", koth.getName());
+        configuration.set("displayName", koth.getDisplayName());
         configuration.set("capture", koth.getCaptureSeconds());
         configuration.set("cooldownStart", koth.getCooldownStart());
         configuration.set("stopAfterSeconds", koth.getStopAfterSeconds());

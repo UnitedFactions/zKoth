@@ -3,6 +3,7 @@ package fr.maxlego08.koth;
 import fr.maxlego08.koth.api.Koth;
 import fr.maxlego08.koth.api.KothEvent;
 import fr.maxlego08.koth.api.KothLootType;
+import fr.maxlego08.koth.api.KothPhase;
 import fr.maxlego08.koth.api.KothStatus;
 import fr.maxlego08.koth.api.KothTeam;
 import fr.maxlego08.koth.api.KothType;
@@ -81,6 +82,7 @@ public class ZKoth extends ZUtils implements Koth {
     private final DiscordWebhookConfig discordWebhookConfig;
     private List<ItemStack> itemStacks;
     private String name;
+    private final String displayName;
     private int captureSeconds;
     private Location minLocation;
     private Location maxLocation;
@@ -89,17 +91,19 @@ public class ZKoth extends ZUtils implements Koth {
     private KothStatus kothStatus = KothStatus.STOP;
     private KothTeam kothTeam = new NoneHook();
     private Player currentPlayer;
+    private boolean contested;
     private AtomicInteger remainingSeconds;
     private TimerTask timerTask;
     private TimerTask timerTaskStop;
     private Timer stopTimer;
     private List<PlayerResult> playerResults = new ArrayList<>();
 
-    public ZKoth(KothPlugin plugin, String fileName, KothType kothType, String name, int captureSeconds, Location minLocation, Location maxLocation, List<String> startCommands, List<String> endCommands, ScoreboardConfiguration cooldownScoreboard, ScoreboardConfiguration startScoreboard, int cooldownStart, int stopAfterSeconds, boolean enableStartCapMessage, boolean enableLooseCapMessage, boolean enableEverySecondsCapMessage, boolean enableEverySecondsCooldownMessage, HologramConfig hologramConfig, List<ItemStack> itemStacks, KothLootType kothLootType, DiscordWebhookConfig discordWebhookConfig, int randomItemStacks, List<String> blacklistTeamId, ProgressBar progressBar, List<RandomCommand> randomCommands, int maxRandomCommands) {
+    public ZKoth(KothPlugin plugin, String fileName, KothType kothType, String name, String displayName, int captureSeconds, Location minLocation, Location maxLocation, List<String> startCommands, List<String> endCommands, ScoreboardConfiguration cooldownScoreboard, ScoreboardConfiguration startScoreboard, int cooldownStart, int stopAfterSeconds, boolean enableStartCapMessage, boolean enableLooseCapMessage, boolean enableEverySecondsCapMessage, boolean enableEverySecondsCooldownMessage, HologramConfig hologramConfig, List<ItemStack> itemStacks, KothLootType kothLootType, DiscordWebhookConfig discordWebhookConfig, int randomItemStacks, List<String> blacklistTeamId, ProgressBar progressBar, List<RandomCommand> randomCommands, int maxRandomCommands) {
         this.plugin = plugin;
         this.fileName = fileName;
         this.kothType = kothType;
         this.name = name;
+        this.displayName = displayName;
         this.captureSeconds = captureSeconds;
         this.minLocation = minLocation;
         this.maxLocation = maxLocation;
@@ -131,6 +135,7 @@ public class ZKoth extends ZUtils implements Koth {
         this.fileName = fileName;
         this.kothType = kothType;
         this.name = name;
+        this.displayName = name;
         this.captureSeconds = captureSeconds;
         this.minLocation = minLocation;
         this.maxLocation = maxLocation;
@@ -171,8 +176,23 @@ public class ZKoth extends ZUtils implements Koth {
     }
 
     @Override
+    public String getDisplayName() {
+        return this.displayName;
+    }
+
+    @Override
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public KothPhase getPhase() {
+        return KothRuntimeState.phase(this.kothStatus, this.currentPlayer != null, this.contested);
+    }
+
+    @Override
+    public boolean isContested() {
+        return this.contested;
     }
 
     @Override
@@ -299,10 +319,13 @@ public class ZKoth extends ZUtils implements Koth {
 
         this.kothStatus = KothStatus.STOP;
         this.currentPlayer = null;
+        this.contested = false;
         this.timerTask = null;
         this.remainingSeconds = null;
         this.playersValues.clear();
-        this.plugin.getScoreBoardManager().clearBoard();
+        if (this.cooldownScoreboard.isEnable() || this.startScoreboard.isEnable()) {
+            this.plugin.getScoreBoardManager().clearBoard();
+        }
         // this.resetBlocks();
         if (this.timerTaskStop != null) this.timerTaskStop.cancel();
         if (this.stopTimer != null) {
@@ -362,7 +385,7 @@ public class ZKoth extends ZUtils implements Koth {
             if (Config.displayMessageCooldown.contains(currentRemainingSeconds)) {
                 broadcast(Message.EVENT_COOLDOWN);
             }
-            if (this.enableEverySecondsCapMessage) {
+            if (this.enableEverySecondsCooldownMessage) {
                 broadcast(Message.EVENT_COOLDOWN_EVERYSECONDS);
             }
 
@@ -372,7 +395,9 @@ public class ZKoth extends ZUtils implements Koth {
                 return;
             }
 
-            this.plugin.getScoreBoardManager().update();
+            if (this.cooldownScoreboard.isEnable()) {
+                this.plugin.getScoreBoardManager().update();
+            }
             this.remainingSeconds.decrementAndGet();
         });
     }
@@ -393,6 +418,9 @@ public class ZKoth extends ZUtils implements Koth {
         broadcast(Message.EVENT_START);
 
         ScoreBoardManager scoreBoardManager = this.plugin.getScoreBoardManager();
+        if (this.cooldownScoreboard.isEnable() && !this.startScoreboard.isEnable()) {
+            scoreBoardManager.clearBoard();
+        }
         if (!this.cooldownScoreboard.isEnable() && this.startScoreboard.isEnable()) {
             scoreBoardManager.setLinesAndSchedule(onScoreboard());
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -442,6 +470,7 @@ public class ZKoth extends ZUtils implements Koth {
     private void resetData() {
         this.playersValues.clear();
         this.currentPlayer = null;
+        this.contested = false;
     }
 
     @Override
@@ -464,11 +493,15 @@ public class ZKoth extends ZUtils implements Koth {
 
         Location pLoc = player.getLocation();
 
-        if (pLoc.distanceSquared(this.getCenter()) > Math.pow(scoreboardRadius, 2)) {
-            plugin.getScoreBoardManager().delete(player);
-            plugin.getScoreBoardManager().getBoards().remove(player);
-        } else {
-            plugin.getScoreBoardManager().createBoard(player, color(startScoreboard.getTitle()));
+        // Disabled native scoreboards must not take ownership away from plugins
+        // such as RealScoreboard.
+        if (KothRuntimeState.shouldManageNativeScoreboard(this.startScoreboard.isEnable())) {
+            if (pLoc.distanceSquared(this.getCenter()) > Math.pow(scoreboardRadius, 2)) {
+                plugin.getScoreBoardManager().delete(player);
+                plugin.getScoreBoardManager().getBoards().remove(player);
+            } else {
+                plugin.getScoreBoardManager().createBoard(player, color(startScoreboard.getTitle()));
+            }
         }
 
         if (this.currentPlayer == null && cuboid.contains(player.getLocation())) {
@@ -496,6 +529,7 @@ public class ZKoth extends ZUtils implements Koth {
             this.remainingSeconds = new AtomicInteger(this.captureSeconds);
             this.timerTask = null;
             this.currentPlayer = null;
+            this.contested = false;
 
             updateDisplay();
         }
@@ -514,6 +548,26 @@ public class ZKoth extends ZUtils implements Koth {
         if (Config.enableCapturePermission && !this.currentPlayer.hasPermission(Config.capturePermission)) return true;
 
         return false;
+    }
+
+    private boolean updateContested(Cuboid cuboid) {
+        if (this.currentPlayer == null || cuboid.getWorld() == null) {
+            return this.contested = false;
+        }
+
+        String capturingTeamId = this.kothTeam.getTeamId(this.currentPlayer);
+        List<String> occupyingTeamIds = cuboid.getWorld().getPlayers().stream()
+                .filter(player -> player != this.currentPlayer)
+                .filter(Player::isOnline)
+                .filter(Player::isValid)
+                .filter(player -> player.getGameMode() != GameMode.SPECTATOR)
+                .filter(player -> !Config.enableCapturePermission || player.hasPermission(Config.capturePermission))
+                .filter(player -> cuboid.contains(player.getLocation()))
+                .map(this.kothTeam::getTeamId)
+                .filter(teamId -> !this.blacklistTeamId.contains(teamId))
+                .collect(Collectors.toList());
+
+        return this.contested = KothRuntimeState.hasCompetingTeam(capturingTeamId, occupyingTeamIds);
     }
 
     @Override
@@ -587,6 +641,7 @@ public class ZKoth extends ZUtils implements Koth {
                 // this.changeBlocks(Config.noOneCapturingMaterial, true);
                 this.timerTask = null;
                 this.currentPlayer = null;
+                this.contested = false;
                 this.remainingSeconds = new AtomicInteger(this.captureSeconds);
 
                 if (enableLooseCapMessage) {
@@ -596,6 +651,11 @@ public class ZKoth extends ZUtils implements Koth {
                 updateDisplay();
                 return;
 
+            }
+
+            if (updateContested(cuboid)) {
+                updateDisplay();
+                return;
             }
 
             if (this.hasWin()) {
@@ -659,7 +719,9 @@ public class ZKoth extends ZUtils implements Koth {
         broadcast(Message.EVENT_WIN);
 
         this.plugin.getKothHologram().end(this);
-        this.plugin.getScoreBoardManager().clearBoard();
+        if (this.cooldownScoreboard.isEnable() || this.startScoreboard.isEnable()) {
+            this.plugin.getScoreBoardManager().clearBoard();
+        }
 
         this.endCommands.forEach(command -> dispatchCommand(command, player));
         if (this.maxRandomCommands != 0 && !this.randomCommands.isEmpty()) {
@@ -711,6 +773,7 @@ public class ZKoth extends ZUtils implements Koth {
 
         this.kothStatus = KothStatus.STOP;
         this.currentPlayer = null;
+        this.contested = false;
         this.timerTask = null;
         this.remainingSeconds = null;
         this.playersValues.clear();
@@ -828,6 +891,9 @@ public class ZKoth extends ZUtils implements Koth {
         string = string.replace("%spawnFormat%", TimerBuilder.getStringTime(seconds));
 
         string = string.replace("%name%", this.name);
+        string = string.replace("%displayName%", this.displayName);
+        string = string.replace("%phase%", this.getPhase().name());
+        string = string.replace("%contested%", String.valueOf(this.contested));
         string = string.replace("%world%", centerLocation.getWorld().getName());
         string = string.replace("%minX%", String.valueOf(minLocation.getBlockX()));
         string = string.replace("%minY%", String.valueOf(minLocation.getBlockY()));
@@ -904,7 +970,12 @@ public class ZKoth extends ZUtils implements Koth {
     @Override
     public void updateDisplay() {
         this.plugin.getKothHologram().update(this);
-        this.plugin.getScoreBoardManager().update();
+        boolean nativeScoreboardEnabled = this.kothStatus == KothStatus.COOLDOWN
+                ? this.cooldownScoreboard.isEnable()
+                : this.startScoreboard.isEnable();
+        if (nativeScoreboardEnabled) {
+            this.plugin.getScoreBoardManager().update();
+        }
     }
 
     @Override
