@@ -118,6 +118,22 @@ enableCapturePermission: false
 # Permission required to capture a KOTH (only used if enableCapturePermission is true)
 capturePermission: "zkoth.capture"
 
+# Optional United Factions daily KOTH pilot. Disabled by default and fail-closed.
+# The Bukkit backend player collection is used, not a proxy-advertised player count.
+dailyKothPilot:
+  enabled: false
+  timezone: "Europe/Amsterdam"
+  evaluationTime: "19:55"
+  weekdayMinimumPlayers: 8
+  saturdayMinimumPlayers: 4
+  minimumTeams: 2
+  cooldownHours: 24
+  pilotDurationDays: 14
+  arenas:
+    - NORTH_OUTPOST
+    - South_Outpost
+  maxConsecutiveSameArena: 2
+
 scoreboardRadius: 50
 
 # Value that will be used for score placeholders if the position does not exist.
