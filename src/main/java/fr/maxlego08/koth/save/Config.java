@@ -21,6 +21,16 @@ public class Config {
 	public static int removeChestSec = 120;
 	public static boolean enableCapturePermission = false;
 	public static String capturePermission = "zkoth.capture";
+	public static boolean dailyKothEnabled = false;
+	public static String dailyKothTimezone = "Europe/Amsterdam";
+	public static String dailyKothEvaluationTime = "19:55";
+	public static int dailyKothWeekdayMinimumPlayers = 8;
+	public static int dailyKothSaturdayMinimumPlayers = 4;
+	public static int dailyKothMinimumTeams = 2;
+	public static int dailyKothCooldownHours = 24;
+	public static int dailyKothPilotDurationDays = 14;
+	public static List<String> dailyKothArenas = Arrays.asList("NORTH_OUTPOST", "South_Outpost");
+	public static int dailyKothMaxConsecutiveSameArena = 2;
 
 	public static PlayerResult defaultPlayerResult = new PlayerResult("X", 0, "X", "X", "X");
 
@@ -68,6 +78,16 @@ public class Config {
 		removeChestSec = configuration.getInt("removeChestSec", 120);
 		enableCapturePermission = configuration.getBoolean("enableCapturePermission", false);
 		capturePermission = configuration.getString("capturePermission", "zkoth.capture");
+		dailyKothEnabled = configuration.getBoolean("dailyKothPilot.enabled", false);
+		dailyKothTimezone = configuration.getString("dailyKothPilot.timezone", "Europe/Amsterdam");
+		dailyKothEvaluationTime = configuration.getString("dailyKothPilot.evaluationTime", "19:55");
+		dailyKothWeekdayMinimumPlayers = configuration.getInt("dailyKothPilot.weekdayMinimumPlayers", 8);
+		dailyKothSaturdayMinimumPlayers = configuration.getInt("dailyKothPilot.saturdayMinimumPlayers", 4);
+		dailyKothMinimumTeams = configuration.getInt("dailyKothPilot.minimumTeams", 2);
+		dailyKothCooldownHours = configuration.getInt("dailyKothPilot.cooldownHours", 24);
+		dailyKothPilotDurationDays = configuration.getInt("dailyKothPilot.pilotDurationDays", 14);
+		dailyKothArenas = configuration.getStringList("dailyKothPilot.arenas");
+		dailyKothMaxConsecutiveSameArena = configuration.getInt("dailyKothPilot.maxConsecutiveSameArena", 2);
 
 		defaultPlayerResult = new PlayerResult(
 				configuration.getString("defaultPlayerResult.playerName", "X"),

@@ -32,6 +32,7 @@ public class KothPlugin extends ZPlugin implements fr.maxlego08.koth.api.KothPlu
     private StorageManager storageManager;
     private KothScoreboard kothScoreboard = new DefaultHook();
     private KothHologram kothHologram = new EmptyHologram();
+    private DailyKothScheduler dailyKothScheduler;
 
     @Override
     public void onEnable() {
@@ -101,6 +102,9 @@ public class KothPlugin extends ZPlugin implements fr.maxlego08.koth.api.KothPlu
         KothPlaceholder kothPlaceholder = new KothPlaceholder(this.kothManager);
         kothPlaceholder.register();
 
+        this.dailyKothScheduler = new DailyKothScheduler(this, this.kothManager);
+        this.dailyKothScheduler.start();
+
         this.postEnable();
     }
 
@@ -111,6 +115,7 @@ public class KothPlugin extends ZPlugin implements fr.maxlego08.koth.api.KothPlu
 
         this.kothHologram.onDisable();
         this.scoreBoardManager.setRunning(false);
+        if (this.dailyKothScheduler != null) this.dailyKothScheduler.stop();
         this.saveFiles();
 
         this.postDisable();
